@@ -1,0 +1,440 @@
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DNA-Gesundheitsprofil Generator</title>
+<style>
+  :root {
+    --green:       #1C8A43;
+    --green-dark:  #156633;
+    --green-light: #e8f5ee;
+    --green-mid:   #c2e4cf;
+    --cream:       #faf9f6;
+    --cream-dark:  #f0ede6;
+    --text:        #1a1a18;
+    --text-muted:  #5a5a52;
+    --text-light:  #8a8a80;
+    --border:      #d8d5cc;
+    --border-light:#ece9e2;
+    --white:       #ffffff;
+    --radius-sm:   6px;
+    --radius-md:   10px;
+    --radius-lg:   16px;
+    --font:        'Georgia', 'Times New Roman', serif;
+    --font-sans:   system-ui, -apple-system, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-sans);
+    background: var(--cream);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 32px 20px 48px;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  .tool-header { text-align: center; margin-bottom: 36px; }
+  .tool-header .eyebrow {
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--green); font-weight: 600; margin-bottom: 10px;
+  }
+  .tool-header h1 {
+    font-family: var(--font); font-size: 26px; font-weight: normal;
+    color: var(--text); margin-bottom: 10px; line-height: 1.3;
+  }
+  .tool-header p { font-size: 14px; color: var(--text-muted); max-width: 480px; margin: 0 auto; }
+  .section { margin-bottom: 28px; }
+  .section-label {
+    font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--green-dark); font-weight: 600; margin-bottom: 12px;
+  }
+  .chip-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    padding: 7px 15px; border-radius: 100px; border: 1px solid var(--border);
+    font-size: 13px; color: var(--text-muted); cursor: pointer;
+    background: var(--white); transition: all 0.15s ease; user-select: none;
+    font-family: var(--font-sans);
+  }
+  .chip:hover { border-color: var(--green); color: var(--green-dark); background: var(--green-light); }
+  .chip.selected { background: var(--green-light); border-color: var(--green); color: var(--green-dark); font-weight: 600; }
+  .add-row { display: flex; gap: 8px; margin-top: 10px; }
+  .add-row input {
+    flex: 1; padding: 8px 12px; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); font-size: 13px; font-family: var(--font-sans);
+    background: var(--white); color: var(--text); outline: none; transition: border-color 0.15s;
+  }
+  .add-row input:focus { border-color: var(--green); }
+  .add-row input::placeholder { color: var(--text-light); }
+  .add-row button {
+    padding: 8px 16px; border: 1px solid var(--green); border-radius: var(--radius-sm);
+    background: var(--white); color: var(--green-dark); font-size: 13px;
+    font-family: var(--font-sans); cursor: pointer; transition: background 0.15s;
+  }
+  .add-row button:hover { background: var(--green-light); }
+  .divider { border: none; border-top: 1px solid var(--border-light); margin: 28px 0; }
+  #generate-btn {
+    width: 100%; padding: 14px; font-size: 15px; font-family: var(--font-sans);
+    font-weight: 600; cursor: pointer; border-radius: var(--radius-md); border: none;
+    background: var(--green); color: var(--white); letter-spacing: 0.02em;
+    transition: background 0.2s, transform 0.1s;
+  }
+  #generate-btn:hover { background: var(--green-dark); }
+  #generate-btn:active { transform: scale(0.99); }
+  #result-area { margin-top: 36px; }
+  .profile-summary {
+    background: var(--green-light); border-left: 3px solid var(--green);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    padding: 14px 18px; font-size: 14px; color: var(--text);
+    line-height: 1.7; margin-bottom: 24px;
+  }
+  .results-heading {
+    font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--green-dark); font-weight: 600; margin-bottom: 14px;
+  }
+  .result-card {
+    background: var(--white); border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg); padding: 18px 20px; margin-bottom: 12px;
+    transition: box-shadow 0.15s;
+  }
+  .result-card.primary { border: 1.5px solid var(--green); }
+  .result-card:hover { box-shadow: 0 2px 12px rgba(28,138,67,0.08); }
+  .card-top {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 12px; margin-bottom: 10px;
+  }
+  .badge {
+    display: inline-block; font-size: 10px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 10px;
+    border-radius: 100px; white-space: nowrap; flex-shrink: 0;
+  }
+  .badge-primary { background: var(--green); color: var(--white); }
+  .badge-secondary { background: var(--cream-dark); color: var(--text-muted); border: 1px solid var(--border); }
+  .test-name { font-family: var(--font); font-size: 17px; font-weight: normal; color: var(--text); margin-bottom: 2px; }
+  .test-tagline { font-size: 12px; color: var(--text-light); margin-bottom: 10px; }
+  .test-desc { font-size: 13px; color: var(--text-muted); line-height: 1.65; margin-bottom: 12px; }
+  .test-price { font-size: 12px; color: var(--green-dark); font-weight: 600; margin-bottom: 10px; }
+  .match-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .match-tag {
+    font-size: 11px; padding: 3px 10px; border-radius: 100px;
+    background: var(--cream-dark); color: var(--text-muted); border: 1px solid var(--border-light);
+  }
+  .secondary-heading {
+    font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--text-light); font-weight: 600; margin: 22px 0 12px;
+  }
+  .result-card.secondary { padding: 14px 18px; background: var(--cream); }
+  .result-card.secondary .test-name { font-size: 15px; }
+  .cta-block {
+    margin-top: 28px; padding: 18px 20px; background: var(--green-light);
+    border-radius: var(--radius-lg); border: 1px solid var(--green-mid); text-align: center;
+  }
+  .cta-block p { font-size: 13px; color: var(--green-dark); margin-bottom: 12px; line-height: 1.6; }
+  .cta-block a {
+    display: inline-block; padding: 10px 22px; background: var(--green);
+    color: var(--white); border-radius: var(--radius-sm); font-size: 13px;
+    font-weight: 600; text-decoration: none; transition: background 0.15s;
+  }
+  .cta-block a:hover { background: var(--green-dark); }
+  .disclaimer {
+    margin-top: 24px; padding: 12px 16px; border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm); font-size: 11px; color: var(--text-light);
+    line-height: 1.7; background: var(--cream-dark);
+  }
+  .error-msg { font-size: 13px; color: #c0392b; padding: 8px 0; }
+  @media (max-width: 480px) {
+    body { padding: 20px 14px 40px; }
+    .tool-header h1 { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="tool-header">
+  <p class="eyebrow">natürlich*gesund · Sigrid Strieder</p>
+  <h1>DNA-Gesundheitsprofil Generator</h1>
+  <p>Wählen Sie Ihre Symptome und Ziele — und erfahren Sie, welche DNA-Analyse am besten zu Ihnen passt.</p>
+</header>
+
+<div class="section">
+  <p class="section-label">Ihre Symptome <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11px;">(mehrere auswählbar)</span></p>
+  <div class="chip-grid" id="symptom-chips">
+    <span class="chip" data-val="Chronische Müdigkeit">Chronische Müdigkeit</span>
+    <span class="chip" data-val="Gewichtsprobleme">Gewichtsprobleme</span>
+    <span class="chip" data-val="Verdauungsbeschwerden">Verdauungsbeschwerden</span>
+    <span class="chip" data-val="Stimmungsschwankungen">Stimmungsschwankungen</span>
+    <span class="chip" data-val="Gelenkschmerzen">Gelenkschmerzen</span>
+    <span class="chip" data-val="Konzentrationsprobleme">Konzentrationsprobleme</span>
+    <span class="chip" data-val="Schlafstörungen">Schlafstörungen</span>
+    <span class="chip" data-val="Blähungen / Reizdarm">Blähungen / Reizdarm</span>
+    <span class="chip" data-val="Häufige Infekte">Häufige Infekte</span>
+    <span class="chip" data-val="Leistungsabfall">Leistungsabfall</span>
+    <span class="chip" data-val="Hautprobleme">Hautprobleme</span>
+    <span class="chip" data-val="Herzkreislaufbeschwerden">Herzkreislaufbeschwerden</span>
+    <span class="chip" data-val="Angststörungen">Angststörungen</span>
+    <span class="chip" data-val="Depressive Verstimmungen">Depressive Verstimmungen</span>
+  </div>
+  <div class="add-row">
+    <input id="custom-symptom" type="text" placeholder="Weiteres Symptom …" />
+    <button onclick="addCustomChip('symptom')">+ Hinzufügen</button>
+  </div>
+</div>
+
+<hr class="divider" />
+
+<div class="section">
+  <p class="section-label">Ihre Ziele <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11px;">(mehrere auswählbar)</span></p>
+  <div class="chip-grid" id="goal-chips">
+    <span class="chip" data-val="Mehr Energie im Alltag">Mehr Energie im Alltag</span>
+    <span class="chip" data-val="Darm sanieren">Darm sanieren</span>
+    <span class="chip" data-val="Gesund abnehmen">Gesund abnehmen</span>
+    <span class="chip" data-val="Sportliche Leistung steigern">Sportliche Leistung steigern</span>
+    <span class="chip" data-val="Psychische Belastbarkeit stärken">Psychische Belastbarkeit stärken</span>
+    <span class="chip" data-val="Entzündungen reduzieren">Entzündungen reduzieren</span>
+    <span class="chip" data-val="Herzgesundheit verbessern">Herzgesundheit verbessern</span>
+    <span class="chip" data-val="Langlebigkeit &amp; Prävention">Langlebigkeit &amp; Prävention</span>
+    <span class="chip" data-val="Hormonbalance">Hormonbalance</span>
+    <span class="chip" data-val="Stressresistenz aufbauen">Stressresistenz aufbauen</span>
+    <span class="chip" data-val="Mentale Klarheit gewinnen">Mentale Klarheit gewinnen</span>
+    <span class="chip" data-val="Gewicht halten">Gewicht halten</span>
+  </div>
+  <div class="add-row">
+    <input id="custom-goal" type="text" placeholder="Weiteres Ziel …" />
+    <button onclick="addCustomChip('goal')">+ Hinzufügen</button>
+  </div>
+</div>
+
+<hr class="divider" />
+
+<button id="generate-btn" onclick="generateProfile()">
+  DNA-Profil jetzt erstellen →
+</button>
+
+<div id="result-area"></div>
+
+<script>
+const selectedSymptoms = new Set();
+const selectedGoals = new Set();
+
+document.querySelectorAll('#symptom-chips .chip').forEach(c => {
+  c.addEventListener('click', () => toggleChip(c, selectedSymptoms));
+});
+document.querySelectorAll('#goal-chips .chip').forEach(c => {
+  c.addEventListener('click', () => toggleChip(c, selectedGoals));
+});
+
+function toggleChip(el, set) {
+  const v = el.dataset.val;
+  if (set.has(v)) { set.delete(v); el.classList.remove('selected'); }
+  else { set.add(v); el.classList.add('selected'); }
+}
+
+function addCustomChip(type) {
+  const inputId = type === 'symptom' ? 'custom-symptom' : 'custom-goal';
+  const gridId  = type === 'symptom' ? 'symptom-chips' : 'goal-chips';
+  const set     = type === 'symptom' ? selectedSymptoms : selectedGoals;
+  const input   = document.getElementById(inputId);
+  const val     = input.value.trim();
+  if (!val) return;
+  const chip = document.createElement('span');
+  chip.className = 'chip selected';
+  chip.dataset.val = val;
+  chip.textContent = val;
+  set.add(val);
+  chip.addEventListener('click', () => toggleChip(chip, set));
+  document.getElementById(gridId).appendChild(chip);
+  input.value = '';
+}
+
+const testDb = [
+  {
+    id: 'dna-health',
+    name: 'DNA Health',
+    tagline: 'Stoffwechsel · Herz · Entzündung · Detox',
+    price: 'Test & Unterlagen: 225 € · Ergebnisbesprechung (60 min): 150 €',
+    symptoms: ['Gelenkschmerzen','Herzkreislaufbeschwerden','Häufige Infekte','Chronische Müdigkeit','Hautprobleme'],
+    goals: ['Herzgesundheit verbessern','Entzündungen reduzieren','Langlebigkeit & Prävention','Hormonbalance'],
+    explanations: {
+      'Gelenkschmerzen': 'Ihr Profil zeigt Gelenkbeschwerden — der DNA Health Test analysiert Gene zur Entzündungsregulation und gibt Hinweise, wie Sie durch Ernährung und Lebensstil gezielt gegensteuern können.',
+      'Herzkreislaufbeschwerden': 'Bei Herzkreislaufbeschwerden liefert der DNA Health Test wichtige Erkenntnisse zum Fettstoffwechsel und zu genetischen Risikofaktoren — als Grundlage für eine individuelle Prävention.',
+      'Häufige Infekte': 'Häufige Infekte können mit genetischen Varianten in der Entgiftung und Immunregulation zusammenhängen, die der DNA Health Test sichtbar macht.',
+      'Chronische Müdigkeit': 'Chronische Müdigkeit hat oft genetische Ursachen im Bereich Methylierung und Eisenstoffwechsel — beides wird im DNA Health Test untersucht.',
+      'Hautprobleme': 'Hautprobleme können auf genetische Schwächen in Entgiftung und oxidativem Stress hinweisen, die der DNA Health Test aufdeckt.',
+      'default': 'Der DNA Health Test analysiert die wichtigsten Gene für Stoffwechsel, Herz-Kreislauf, Entzündungsneigung und Entgiftung — und bildet die Grundlage für eine individuell angepasste Prävention.'
+    }
+  },
+  {
+    id: 'dna-resilience',
+    name: 'DNAresilience',
+    tagline: 'Stressreaktion · Immunsystem · Langlebigkeit',
+    price: 'Test & Unterlagen: 225 € · Ergebnisbesprechung (60 min): 110 €',
+    symptoms: ['Chronische Müdigkeit','Häufige Infekte','Schlafstörungen','Leistungsabfall'],
+    goals: ['Stressresistenz aufbauen','Langlebigkeit & Prävention','Mehr Energie im Alltag','Psychische Belastbarkeit stärken'],
+    explanations: {
+      'Schlafstörungen': 'Schlafstörungen und eingeschränkte Erholung können auf eine genetisch bedingte Stressempfindlichkeit hinweisen — der DNAresilience Test zeigt, wo Ihre Stressachse genetisch besonders sensibel ist.',
+      'Leistungsabfall': 'Anhaltender Leistungsabfall ist häufig ein Zeichen für eine erschöpfte Stressantwort. Der DNAresilience Test analysiert, welche genetischen Faktoren dabei eine Rolle spielen.',
+      'Chronische Müdigkeit': 'Chronische Müdigkeit, die trotz Erholung bleibt, hat oft eine genetische Komponente im Bereich der Stressregulation — genau das untersucht der DNAresilience Test.',
+      'default': 'Der DNAresilience Test analysiert sieben Kernbereiche der Stressantwort und zeigt, wie Sie Ihre genetisch bedingte Resilienz gezielt stärken können.'
+    }
+  },
+  {
+    id: 'dna-mind',
+    name: 'DNAmind',
+    tagline: 'Neurotransmitter · Kognition · Psyche',
+    price: 'Test & Unterlagen: 179 € · Ergebnisbesprechung (60 min): 110 €',
+    symptoms: ['Stimmungsschwankungen','Konzentrationsprobleme','Schlafstörungen','Chronische Müdigkeit','Angststörungen','Depressive Verstimmungen'],
+    goals: ['Psychische Belastbarkeit stärken','Mehr Energie im Alltag','Stressresistenz aufbauen','Mentale Klarheit gewinnen'],
+    explanations: {
+      'Stimmungsschwankungen': 'Stimmungsschwankungen können auf genetische Varianten im Serotonin- und Dopaminstoffwechsel zurückgehen — der DNAmind Test macht diese sichtbar und zeigt Ansätze zur Stabilisierung.',
+      'Konzentrationsprobleme': 'Konzentrationsschwäche hat häufig eine neurobiologische Grundlage. Der DNAmind Test analysiert Gene, die die kognitive Leistungsfähigkeit beeinflussen.',
+      'Angststörungen': 'Bei Angstneigungen liefert der DNAmind Test Einblicke in die genetischen Grundlagen der Stressverarbeitung und Neurotransmitter-Balance.',
+      'Depressive Verstimmungen': 'Depressive Verstimmungen können mit genetischen Varianten im Bereich Serotonin und Methylierung zusammenhängen, die der DNAmind Test analysiert.',
+      'default': 'Der DNAmind Test gibt Einblick in die genetischen Grundlagen von Stimmung, Kognition und psychischer Belastbarkeit.'
+    }
+  },
+  {
+    id: 'dna-diet',
+    name: 'DNAdiet',
+    tagline: 'Ernährungstyp · Gewicht · Nährstoffverwertung',
+    price: 'Test & Unterlagen: 179 € · Ergebnisbesprechung (30 min): 80 €',
+    symptoms: ['Gewichtsprobleme','Chronische Müdigkeit','Leistungsabfall','Hautprobleme'],
+    goals: ['Gesund abnehmen','Mehr Energie im Alltag','Hormonbalance','Langlebigkeit & Prävention','Gewicht halten'],
+    explanations: {
+      'Gewichtsprobleme': 'Wenn Gewichtsveränderungen trotz Bemühungen ausbleiben, liegt das häufig an genetischen Faktoren im Fett- und Kohlenhydratstoffwechsel — genau das analysiert der DNAdiet Test.',
+      'default': 'Der DNAdiet Test zeigt, welcher Ernährungstyp genetisch zu Ihnen passt, wie Ihr Körper Fette und Kohlenhydrate verwertet, und welche Rolle der Tag-Nacht-Rhythmus bei Ihrem Gewicht spielt.'
+    }
+  },
+  {
+    id: 'dna-sport',
+    name: 'DNAsport',
+    tagline: 'Trainingsreaktion · Verletzungsrisiko · Erholung',
+    price: 'Test & Unterlagen: 179 € · Ergebnisbesprechung (30 min): 80 €',
+    symptoms: ['Leistungsabfall','Gelenkschmerzen','Chronische Müdigkeit'],
+    goals: ['Sportliche Leistung steigern','Mehr Energie im Alltag','Entzündungen reduzieren'],
+    explanations: {
+      'Leistungsabfall': 'Der DNAsport Test zeigt, ob Ihr Körper genetisch eher auf Ausdauer oder Kraft ausgerichtet ist und wie schnell er sich erholt — wichtige Hinweise bei anhaltendem Leistungsabfall.',
+      'Gelenkschmerzen': 'Gelenkbeschwerden beim Sport können auf ein genetisch erhöhtes Weichteilverletzungsrisiko hinweisen, das der DNAsport Test sichtbar macht.',
+      'default': 'Der DNAsport Test analysiert Ihre genetische Veranlagung für Kraft, Ausdauer, Erholung und Verletzungsanfälligkeit — für ein Training, das wirklich zu Ihnen passt.'
+    }
+  },
+  {
+    id: 'dna-gut',
+    name: 'DNAgut',
+    tagline: 'Darmgesundheit · Verträglichkeit · Immunachse',
+    price: 'Preis auf Anfrage',
+    symptoms: ['Verdauungsbeschwerden','Blähungen / Reizdarm','Hautprobleme','Häufige Infekte','Chronische Müdigkeit'],
+    goals: ['Darm sanieren','Entzündungen reduzieren','Gesund abnehmen','Hormonbalance'],
+    explanations: {
+      'Verdauungsbeschwerden': 'Anhaltende Verdauungsbeschwerden haben häufig eine genetische Komponente. Der DNAgut Test analysiert, wie Ihr Körper genetisch auf bestimmte Nahrungsmittel reagiert.',
+      'Blähungen / Reizdarm': 'Bei Reizdarm-Beschwerden gibt der DNAgut Test Aufschluss über genetische Faktoren in der Darm-Immun-Achse und mögliche Unverträglichkeiten.',
+      'default': 'Der DNAgut Test untersucht Gene rund um Verdauung, Laktose- und Glutenverträglichkeit sowie das Zusammenspiel von Darm und Immunsystem.'
+    }
+  }
+];
+
+function scoreTest(test, symptoms, goals) {
+  let score = 0;
+  symptoms.forEach(s => {
+    if (test.symptoms.some(ts => s.toLowerCase().includes(ts.toLowerCase()) || ts.toLowerCase().includes(s.toLowerCase()))) score += 2;
+  });
+  goals.forEach(g => {
+    if (test.goals.some(tg => g.toLowerCase().includes(tg.toLowerCase()) || tg.toLowerCase().includes(g.toLowerCase()))) score += 3;
+  });
+  return score;
+}
+
+function getExplanation(test, matchedSymptoms) {
+  for (const s of matchedSymptoms) {
+    for (const key of Object.keys(test.explanations)) {
+      if (key !== 'default' && s.toLowerCase().includes(key.toLowerCase())) {
+        return test.explanations[key];
+      }
+    }
+  }
+  return test.explanations['default'];
+}
+
+function buildSummary(sympArr, goalArr, primary) {
+  if (primary.length === 0) return '';
+  const topTest = primary[0].name;
+  const hasMind = primary.some(t => t.id === 'dna-mind');
+  const hasGut  = primary.some(t => t.id === 'dna-gut');
+  const hasDiet = primary.some(t => t.id === 'dna-diet');
+
+  let text = `Basierend auf Ihren Angaben`;
+  if (sympArr.length > 0) text += ` — ${sympArr.slice(0,2).join(', ')}${sympArr.length > 2 ? ' u.a.' : ''}`;
+  text += ` — empfiehlt sich vor allem der <strong>${topTest}</strong>`;
+  if (primary.length > 1) text += ` sowie ${primary.slice(1).map(t => `<strong>${t.name}</strong>`).join(' und ')}`;
+  text += `. Als zertifizierte Nordic Practitioner bespreche ich die Ergebnisse persönlich mit Ihnen und entwickle einen individuellen Leitfaden.`;
+  return text;
+}
+
+function generateProfile() {
+  const sympArr = Array.from(selectedSymptoms);
+  const goalArr = Array.from(selectedGoals);
+
+  if (sympArr.length === 0 && goalArr.length === 0) {
+    document.getElementById('result-area').innerHTML = '<p class="error-msg">Bitte mindestens ein Symptom oder ein Ziel auswählen.</p>';
+    return;
+  }
+
+  const scored = testDb
+    .map(t => ({ ...t, score: scoreTest(t, sympArr, goalArr) }))
+    .sort((a, b) => b.score - a.score);
+
+  const primary   = scored.filter(t => t.score >= 3);
+  const secondary = scored.filter(t => t.score > 0 && t.score < 3);
+
+  let html = '';
+
+  const summary = buildSummary(sympArr, goalArr, primary);
+  if (summary) html += `<div class="profile-summary">${summary}</div>`;
+
+  if (primary.length > 0) {
+    html += `<p class="results-heading">Empfohlene Tests für Ihr Profil</p>`;
+    primary.forEach((t, i) => {
+      const matchedS = sympArr.filter(s => t.symptoms.some(ts => s.toLowerCase().includes(ts.toLowerCase()) || ts.toLowerCase().includes(s.toLowerCase())));
+      const matchedG = goalArr.filter(g => t.goals.some(tg => g.toLowerCase().includes(tg.toLowerCase()) || tg.toLowerCase().includes(g.toLowerCase())));
+      const expl = getExplanation(t, matchedS);
+      html += `<div class="result-card ${i === 0 ? 'primary' : ''}">
+        <div class="card-top">
+          <div>
+            <p class="test-name">${t.name}</p>
+            <p class="test-tagline">${t.tagline}</p>
+          </div>
+          ${i === 0 ? '<span class="badge badge-primary">Beste Übereinstimmung</span>' : '<span class="badge badge-secondary">Empfohlen</span>'}
+        </div>
+        <p class="test-desc">${expl}</p>
+        <p class="test-price">${t.price}</p>
+        <div class="match-tags">
+          ${matchedS.map(s => `<span class="match-tag">↳ ${s}</span>`).join('')}
+          ${matchedG.map(g => `<span class="match-tag">◎ ${g}</span>`).join('')}
+        </div>
+      </div>`;
+    });
+  }
+
+  if (secondary.length > 0) {
+    html += `<p class="secondary-heading">Ergänzend möglich</p>`;
+    secondary.forEach(t => {
+      html += `<div class="result-card secondary">
+        <p class="test-name">${t.name}</p>
+        <p class="test-tagline" style="margin-bottom:6px;">${t.tagline}</p>
+        <p class="test-desc" style="font-size:12px;">${t.explanations['default']}</p>
+      </div>`;
+    });
+  }
+
+  if (primary.length === 0 && secondary.length === 0) {
+    html = '<p class="test-desc" style="padding:8px 0;">Basierend auf den Angaben konnte kein Test eindeutig zugeordnet werden. Bitte weitere Symptome oder Ziele angeben.</p>';
+  }
+
+  html += `
+    <div class="cta-block">
+      <p>Möchten Sie mehr über den passenden Test erfahren oder direkt einen Termin zur Beratung vereinbaren?</p>
+      <a href="https://www.sigrid-strieder.de/naturheilpraxis-kontakt-anfahrt" target="_blank" rel="noopener">Beratungstermin anfragen →</a>
+    </div>
+    <div class="disclaimer">
+      Diese Empfehlung ersetzt keine ärztliche oder heilpraktische Beratung. Die DNA-Tests liefern Hinweise auf genetische Veranlagungen — keine Diagnosen. Sigrid Strieder bespricht die Ergebnisse mit Ihnen in einer persönlichen Coachingsitzung und entwickelt gemeinsam mit Ihnen einen individuellen Leitfaden.
+    </div>`;
+
+  document.getElementById('result-area').innerHTML = html;
